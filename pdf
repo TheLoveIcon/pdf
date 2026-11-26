@@ -1,0 +1,794 @@
+1. Resume, project ownership and daily work
+Question 1. Walk me through your DevOps experience. What do you actually do in a normal
+week?
+INTERVIEW-READY ANSWER
+My work covers CI/CD automation, containerization, build and release support, infrastructure automation and Linux
+operations. In a normal week I work on Jenkins pipeline changes or failures, Docker image builds, vulnerability scan
+results, deployment coordination, Ansible or Bash automation, Linux troubleshooting and Kubernetes/Vault-related
+activities. I work from sprint tickets, clarify acceptance criteria, implement and test changes in lower environments,
+coordinate reviews and approvals, support releases, verify results and update the ticket with evidence. I clearly separate
+what I personally did from work owned by another team.
+Question 2. Explain your Kubernetes cluster upgrade project from planning to validation.
+INTERVIEW-READY ANSWER
+I first confirm the source and target versions, supported upgrade path, deprecated APIs, add-on compatibility,
+maintenance window and rollback or recovery plan. I check cluster health, node readiness, workload replicas,
+PodDisruptionBudgets, capacity and backups. I then follow the platform's control-plane upgrade procedure and rotate
+worker nodes in batches, cordoning and draining nodes safely. After each batch I validate node readiness, system Pods,
+application health, ingress, storage and monitoring. I stop if health checks fail. I would state the actual versions and
+platform used in my project rather than guessing.
+Question 3. Explain your HashiCorp Vault Enterprise migration and its risks.
+INTERVIEW-READY ANSWER
+The objective was to move from the open-source Vault deployment to Enterprise while preserving secure access to secrets
+and minimizing disruption. I would describe the real source and target versions, storage backend, seal or auto-unseal
+setup, authentication methods, policies, integrations and replication only if they were part of the implementation. Key
+risks include data integrity, token and policy compatibility, authentication failures, seal configuration, network access and
+application downtime. I would validate in a controlled environment, verify backups, plan a maintenance window, migrate
+using the supported procedure, test representative clients and policies, monitor audit logs and retain a recovery plan.
+Question 4. How would you safely decommission a legacy HA Vault deployment?
+INTERVIEW-READY ANSWER
+I would discover dependencies before shutting anything down: application clients, DNS records, load balancer targets,
+authentication methods, policies, scheduled jobs, monitoring checks and automation still pointing to the old endpoint. I
+would confirm workloads have moved, test access against the replacement, obtain owner sign-off, remove traffic in stages
+and monitor failed requests. I would preserve required backups and audit records, then decommission through change
+control. Evidence includes dependency checks, application tests, monitoring and confirmation that no clients still use the
+legacy endpoint.
+Question 5. Your resume mentions 70% lower image retrieval latency and 30% lower
+deployment-related operational expenses. Explain the result.
+INTERVIEW-READY ANSWER
+The work involved optimizing JFrog Artifactory storage and retrieval using AWS S3-backed cache storage. I would explain
+the exact before-and-after measurement method: which image pulls were measured, baseline and new latency, cache-hit
+behavior, workload sample and measurement period. I would also explain which cost components were included. I would
+quote the 70% and 30% only with the same scope and measurement basis used in the project, and I would not imply that
+those figures apply to every workload.
+Question 6. A manager asks whether you can deploy today, but testing is incomplete. What
+do you do?
+INTERVIEW-READY ANSWER
+I explain which tests are incomplete, the risk of releasing without them and the impact of delay. I propose the fastest safe
+path: finish critical tests, use a limited rollout if suitable, obtain required approval and monitor the release. If a formal risk
+exception is approved, I document the approver and mitigation. I do not silently bypass security scans, reviews or
+production approvals.
+Question 7. Tell me about a production issue you handled. How do you structure the
+answer?
+INTERVIEW-READY ANSWER
+I use a real incident and explain: what failed and who was affected; my responsibility; the first checks; the evidence that
+identified the cause; the fix or rollback; how I verified recovery; and what prevention action followed. I include actual
+commands, logs, dashboards and team coordination where relevant. I distinguish my own contribution from actions
+performed by others and never invent an incident.
+Page 3
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+2. Linux administration and troubleshooting
+Question 8. A production Linux server is slow. Walk me through your first 10 minutes.
+INTERVIEW-READY ANSWER
+I establish scope and start time, then inspect load and processes with `uptime`, `top` and `ps`; memory and swap with
+`free -h` and `vmstat`; disk and inode usage with `df -h` and `df -i`; disk I/O with `iostat -xz 1` if available; and sockets
+with `ss -s`. I inspect application and system logs using `journalctl`. I compare with normal baselines, identify the
+constrained resource or failing dependency, make a controlled change and verify recovery rather than killing processes
+blindly.
+uptime
+top
+free -h
+df -h
+df -i
+ps aux --sort=-%cpu | head -n 6
+ps aux --sort=-%mem | head -n 6
+ss -s
+journalctl -p err -n 50
+LIKELY FOLLOW-UP
+Which commands distinguish CPU, memory, disk capacity, inode and disk I/O problems?
+Question 9. The application cannot write logs, but `df -h` shows free space. What else do
+you check?
+INTERVIEW-READY ANSWER
+I check inode exhaustion with `df -i`, directory permissions with `ls -ld` and `namei -l`, ownership with `stat`, mount
+options with `findmnt`, whether the filesystem is read-only, quotas and the service's effective user. A filesystem can have
+free bytes but no free inodes, or the application may lack write permission.
+Question 10. A service fails after a reboot. How do you investigate?
+INTERVIEW-READY ANSWER
+I check `systemctl status <service>` and `journalctl -u <service> -b`, inspect the unit using `systemctl cat`, and verify
+dependencies, configuration syntax, environment files, permissions, mounts and ports. I confirm whether it should start
+automatically before enabling it. After fixing the cause I restart and verify the process and application endpoint.
+Question 11. A disk is full. How do you recover safely?
+INTERVIEW-READY ANSWER
+I identify the mount with `df -hT`, check inodes with `df -i`, locate large directories with `du -xhd1 /path | sort -h`, and
+inspect logs, caches, container layers and deleted-but-open files using `lsof +L1`. I confirm retention policy before
+cleanup. I use log rotation or the service's safe truncation procedure rather than deleting an active log blindly, then verify
+space and fix the cause.
+Question 12. SSH to 20 servers suddenly fails. How do you isolate the issue?
+INTERVIEW-READY ANSWER
+I test a known-good and affected host, then check DNS, route, TCP 22 connectivity, SSH daemon status,
+firewall/security-group rules, authorized keys, `.ssh` permissions, disk space and authentication logs. I use console or
+approved out-of-band access if necessary. I avoid weakening SSH security across the fleet before identifying the cause.
+Question 13. Find the process listening on port 8080.
+INTERVIEW-READY ANSWER
+I use `sudo ss -lntp | grep ':8080'` to identify the listening socket and process. I can also use `sudo lsof -i :8080`. Then I
+inspect the PID and service before making any change.
+sudo ss -lntp | grep ':8080'
+sudo lsof -i :8080
+ps -fp <PID>
+Question 14. A script works manually but fails in cron. Why?
+INTERVIEW-READY ANSWER
+Cron has a limited environment and may use a different PATH, shell, working directory and permissions. I use absolute
+paths, set required variables, log stdout and stderr, verify the cron user's permissions and test with the same user and
+environment. I then inspect cron logs or the system journal.
+3. Networking, DNS, HTTP and Nginx
+Page 4
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+Question 15. Users report a website is unavailable. Walk through the request path you
+check.
+INTERVIEW-READY ANSWER
+I check the service locally, process and listening port, then test the local HTTP endpoint. From another host I check DNS,
+connectivity and HTTP response. I then inspect load balancer health, firewall and security-group rules, routes, TLS
+certificates and upstream connectivity. I compare a failing path with a working one to locate where the request stops.
+systemctl status nginx
+sudo ss -lntp
+curl -v http://127.0.0.1
+dig example.com
+nc -vz example.com 443
+curl -I https://example.com
+Question 16. Nginx returns 502 after a deployment. What do you check?
+INTERVIEW-READY ANSWER
+I inspect Nginx error and access logs and confirm the Nginx process is healthy. A 502 often means Nginx cannot obtain a
+valid response from its upstream. I verify the application process, upstream IP and port, DNS/service discovery, Pod
+readiness, network policy and timeout settings. I test the upstream directly from the Nginx host. If the release caused it, I
+compare config and versions and roll back if that is the safest recovery.
+Question 17. You must deploy a config change to Nginx on 20 servers. How do you do it
+safely?
+INTERVIEW-READY ANSWER
+I keep the config in version control, deploy it using Ansible templates, validate syntax with `nginx -t`, start with a canary
+group, reload rather than restart when appropriate, verify endpoint and error logs, then roll out in batches. I retain the
+previous known-good config and a rollback task. I avoid manual server-by-server edits.
+Question 18. Some clients resolve a domain to the old IP. Why?
+INTERVIEW-READY ANSWER
+DNS answers may be cached by clients or recursive resolvers until TTL expiry. I compare authoritative answers with
+resolver answers, inspect TTL, check for multiple records or split-horizon DNS, and confirm the correct zone was updated. I
+allow for caching rather than assuming every client refreshes immediately.
+Question 19. A TLS certificate expires tonight. What do you do?
+INTERVIEW-READY ANSWER
+I identify the certificate, hostname, chain and termination point—Nginx, load balancer or ingress. I renew it through the
+approved process, validate SANs and chain, install it securely, test configuration, reload and verify externally. I confirm
+automated renewal and alerting to prevent recurrence.
+4. Git and collaboration
+Question 20. A breaking commit was pushed to a shared branch. How do you recover?
+INTERVIEW-READY ANSWER
+I identify the commit and impact, notify the team and stop promotion if needed. If it is shared, I normally use `git revert
+<commit>` to create a new commit that undoes it rather than rewriting shared history. I test, merge through review and
+then investigate the original change.
+Question 21. Two developers changed the same file and there is a merge conflict. What do
+you do?
+INTERVIEW-READY ANSWER
+I fetch and integrate the latest remote changes according to team policy, inspect conflict markers and understand both
+changes, edit the file to preserve intended behavior, run tests and review `git diff`. I stage the resolved file and complete
+the merge or rebase. I do not blindly select ours or theirs.
+Question 22. Explain fetch, pull and push in a real workflow.
+INTERVIEW-READY ANSWER
+`git fetch` downloads remote changes but does not integrate them into my current branch. `git pull` fetches and then
+merges or rebases according to configuration. `git push` sends local commits to the remote. I update my branch before
+work, then commit, test, push and create a pull request.
+Question 23. A secret was committed and deleted in the next commit. Is it safe?
+INTERVIEW-READY ANSWER
+No. It can remain in history, clones, forks, caches and CI logs. I revoke or rotate it immediately, notify security, identify
+usage, and follow history-cleanup policy. I add secret scanning and move credentials to a protected credential store.
+Page 5
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+Deleting the visible line does not invalidate the secret.
+Question 24. How do you manage a production hotfix?
+INTERVIEW-READY ANSWER
+I branch from the correct production tag or release branch, make the smallest fix, run required tests and approvals, deploy
+through the controlled process and then merge or cherry-pick the fix back to the active development branch. I document
+the release tag and change record.
+5. Jenkins and CI/CD
+Question 25. A Jenkins Maven build that worked yesterday now fails. How do you
+troubleshoot?
+INTERVIEW-READY ANSWER
+I inspect console output and find the first meaningful error. I check the triggering commit, Jenkins agent, Java and Maven
+versions, `pom.xml`, dependency repository access, credentials and disk space. I compare with the last successful build
+and reproduce on a clean agent. I classify it as code, agent, dependency, network or repository failure and fix the cause
+rather than repeatedly rerunning.
+Question 26. Design a Jenkins pipeline from Git commit to production.
+INTERVIEW-READY ANSWER
+I would use stages for checkout, compile, unit tests, static analysis and quality gate, package, publish artifact, Docker
+build, image scan, registry push, deploy to test, smoke tests, approval and production deploy. I use controlled agents,
+credentials store or secrets manager, immutable artifact tags, archived reports, timeouts and notifications. I promote the
+same tested artifact across environments.
+Question 27. Write a simple Declarative Jenkinsfile for Maven.
+INTERVIEW-READY ANSWER
+This is a minimal example; the real agent, tool names and credential IDs must match the team's Jenkins configuration.
+pipeline {
+  agent any
+  tools {
+    maven 'Maven-3'
+    jdk 'JDK-17'
+  }
+  stages {
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+    stage('Build and Test') {
+      steps { sh 'mvn -B clean verify' }
+    }
+    stage('Archive') {
+      steps {
+        archiveArtifacts artifacts: 'target/*.jar',
+                         fingerprint: true
+      }
+    }
+  }
+  post {
+    always {
+      junit testResults: 'target/surefire-reports/*.xml',
+            allowEmptyResults: true
+    }
+  }
+}
+LIKELY FOLLOW-UP
+How would you add image scanning, approval and deployment stages?
+Question 28. How do you secure Jenkins credentials and agents?
+INTERVIEW-READY ANSWER
+I store credentials in Jenkins Credentials or an approved secrets manager, reference them by ID, scope access to the
+required jobs and avoid printing them. I use dedicated agents with least privilege, restrict controller executors, patch
+Jenkins and plugins, protect script approvals, isolate untrusted pull-request builds and audit access. I never hard-code
+secrets in a Jenkinsfile.
+Question 29. Jenkins controller is down and teams cannot deploy. What do you do?
+INTERVIEW-READY ANSWER
+I establish whether the controller, network, storage or dependency failed. I check service status, logs, disk, memory, JVM
+health, recent plugin changes and agent connectivity. I communicate impact and follow recovery procedures. After
+Page 6
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+restoration I validate login, job configuration, credentials, agent execution and a non-production pipeline before allowing
+production releases.
+Question 30. Pipeline is green but production still runs the old application. Where do you
+look?
+INTERVIEW-READY ANSWER
+I trace the commit SHA, build number, artifact checksum, image tag and digest, registry path, deployment manifest or
+Helm values, namespace and rollout status. I check whether the deploy stage targeted the right environment and whether
+a mutable tag caused confusion. I inspect the running container image ID, not just Jenkins status.
+Question 31. A Jenkins pipeline takes 40 minutes. How do you improve it?
+INTERVIEW-READY ANSWER
+I measure stage durations, then check repeated dependency downloads, slow tests, overloaded agents, large Docker
+contexts and serial tasks. I use caching, safe parallelism, optimized Docker layers and right-sized agents. I preserve
+reproducibility and test coverage rather than skipping checks.
+Question 32. Explain CI, continuous delivery and continuous deployment.
+INTERVIEW-READY ANSWER
+CI builds and tests changes as developers integrate them. Continuous delivery keeps software deployable but may require
+manual production approval. Continuous deployment automatically releases changes after required checks pass. I explain
+where the team's actual approval gates sit.
+6. Maven, artifacts and JFrog Artifactory
+Question 33. Maven cannot download a dependency. What do you check?
+INTERVIEW-READY ANSWER
+I identify the exact group, artifact and version from the error. I check repository URL, DNS/network, proxy, credentials,
+permissions and whether that version exists. I inspect `settings.xml` and the effective POM without exposing credentials.
+If a local cache entry is corrupt, I remove only that artifact's cache directory rather than wiping everything.
+Question 34. Why use an artifact repository instead of copying JAR files between servers?
+INTERVIEW-READY ANSWER
+It provides controlled, versioned and auditable storage for build outputs, with access control, checksums, metadata,
+retention and promotion. It ensures the exact tested artifact can be retrieved consistently instead of relying on manual
+copies.
+Question 35. Artifactory image retrieval is slow. What would you investigate?
+INTERVIEW-READY ANSWER
+I measure whether delay comes from DNS, network transfer, registry response, authentication, cache misses or image
+size. I inspect Artifactory logs and storage/cache metrics, the S3-backed storage path, data transfer and image layers. I
+make a controlled change and compare representative workloads before and after.
+Question 36. How do you prevent an unapproved artifact from reaching production?
+INTERVIEW-READY ANSWER
+I use repository permissions, immutable versions, checksums, vulnerability and policy scans, promotion approvals and
+deployment credentials restricted to approved repositories. Pipelines deploy a known digest or immutable version, not an
+arbitrary developer tag.
+7. Docker and containerization
+Question 37. A container exits immediately. How do you troubleshoot?
+INTERVIEW-READY ANSWER
+I inspect `docker ps -a`, `docker logs` and `docker inspect` for exit code and configuration. I check entrypoint, CMD,
+environment, mounted files, permissions, ports and dependencies. I reproduce in a safe environment, fix the Dockerfile or
+runtime config, rebuild and redeploy rather than manually patching a running production container.
+Question 38. Your Docker image is 2 GB. How do you reduce it?
+INTERVIEW-READY ANSWER
+I inspect layers with `docker history`, choose a smaller trusted base, use multi-stage builds, install only runtime
+dependencies, remove package caches in the same layer, copy only necessary files and use `.dockerignore`. I keep build
+tools out of the final runtime image and rescan after optimization.
+Page 7
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+Question 39. Explain a multi-stage Docker build for Java.
+INTERVIEW-READY ANSWER
+The build stage uses Maven and a JDK to compile and package the application. The runtime stage uses a smaller JRE
+image and copies only the JAR. This excludes Maven, compiler tools and source from the final image. I pin base versions
+and run as non-root.
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn -B clean package -DskipTests
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+RUN useradd --system --uid 10001 appuser
+COPY --from=build /app/target/*.jar app.jar
+USER 10001
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+LIKELY FOLLOW-UP
+Why does EXPOSE not make a container port reachable from the host?
+Question 40. Container is running but users cannot access port 8080. What do you check?
+INTERVIEW-READY ANSWER
+I verify the app listens on the expected interface and port inside the container, then inspect `docker port`, port mapping,
+host firewall and network. `EXPOSE` documents a port; it does not publish it. A mapping such as `-p 8080:8080` publishes
+the container port on the host.
+Question 41. It works on your laptop but fails on the server. What differs?
+INTERVIEW-READY ANSWER
+I compare image digest, CPU architecture, environment variables, mounts, permissions, DNS/network, secrets, resource
+limits, runtime and external dependencies. I deploy the same immutable image digest that passed testing rather than an
+untracked local build.
+Question 42. How do you run containers securely?
+INTERVIEW-READY ANSWER
+I use minimal trusted images, non-root users, no privileged mode, dropped capabilities, read-only filesystems where
+possible, restricted mounts and network, resource limits, patched dependencies, image scans and secrets from a runtime
+secret store.
+8. Kubernetes and Helm
+Question 43. A production Pod is in CrashLoopBackOff. Walk through your investigation.
+INTERVIEW-READY ANSWER
+I run `kubectl describe pod` to inspect events, restart count, probes and termination reason. I check current and previous
+logs, then inspect image, command, environment, ConfigMaps, Secrets, volumes, resource limits and dependencies. If
+OOMKilled, I review memory usage and limits; if a probe fails, I verify path, port and startup timing. I fix the root cause and
+verify healthy replicas.
+kubectl get pods -n production
+kubectl describe pod <pod> -n production
+kubectl logs <pod> -n production
+kubectl logs <pod> -n production --previous
+kubectl get events -n production --sort-by=.lastTimestamp
+LIKELY FOLLOW-UP
+What are common causes of CrashLoopBackOff?
+Question 44. A Pod is Pending for 15 minutes. What do you check?
+INTERVIEW-READY ANSWER
+I inspect Pod events and scheduler messages. Causes include insufficient CPU or memory, node selectors or affinity with
+no match, taints without tolerations, unbound PVCs, quota limits or unavailable nodes. I check nodes, allocatable capacity,
+PVCs, quotas and scheduling rules before changing anything.
+Question 45. A Pod shows ImagePullBackOff. What do you check?
+INTERVIEW-READY ANSWER
+I inspect events, verify image name and tag, registry reachability, imagePullSecret, service account, credentials,
+repository permissions and rate limits. I correct the image reference or secret and watch the rollout.
+Page 8
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+Question 46. Deployment succeeds but users see the old version. How do you
+troubleshoot?
+INTERVIEW-READY ANSWER
+I check Deployment image, ReplicaSets and Pods, confirm the running digest, verify Service selectors, EndpointSlices,
+Ingress or load balancer routing and DNS. I check whether a mutable tag was reused and whether traffic reaches another
+cluster or namespace.
+Question 47. Explain startup, readiness and liveness probes.
+INTERVIEW-READY ANSWER
+Startup probes allow slow applications time to initialize before liveness and readiness checks begin. Readiness determines
+whether a Pod receives traffic; failure removes it from ready endpoints without restarting it. Liveness detects a stuck or
+unhealthy container and can trigger restart. I configure probes to reflect real application health and startup time.
+Question 48. A Kubernetes node becomes NotReady. What do you do?
+INTERVIEW-READY ANSWER
+I inspect node conditions and events, kubelet and container runtime health, CPU, memory, disk pressure, network and
+control-plane connectivity. I assess affected workloads and PodDisruptionBudgets before draining or replacing the node. I
+follow the cluster node-replacement procedure and verify workloads reschedule.
+Question 49. Deployment vs StatefulSet vs DaemonSet—when do you use each?
+INTERVIEW-READY ANSWER
+Deployment is for stateless replicas such as APIs. StatefulSet is for workloads requiring stable identity and often persistent
+storage. DaemonSet runs a Pod on each eligible node, commonly for logging, monitoring or networking agents.
+Question 50. A Service has no endpoints. What do you check?
+INTERVIEW-READY ANSWER
+I compare Service selectors with Pod labels, check Pod readiness, inspect Endpoints or EndpointSlices, namespace and
+port/targetPort, and readiness probes. A Service with no matching ready Pods cannot route traffic.
+Question 51. How would you safely upgrade a Kubernetes cluster?
+INTERVIEW-READY ANSWER
+I review supported version skew, release notes, deprecated APIs, add-on/CNI compatibility, capacity, PDBs and backups. I
+validate in non-production, upgrade control plane and then worker nodes in batches using cordon and drain. I monitor
+system Pods, node readiness, workloads, ingress, storage and metrics, with a recovery plan.
+Question 52. A Helm upgrade fails. How do you recover?
+INTERVIEW-READY ANSWER
+I inspect `helm status`, `helm history`, values and Kubernetes events. I render templates with `helm template` and check
+immutable-field changes, missing secrets, RBAC and readiness. If the prior release is healthy, I use `helm rollback
+<release> <revision>` and verify the app, then fix and test the chart.
+Question 53. ConfigMap vs Secret. Is a Kubernetes Secret encrypted?
+INTERVIEW-READY ANSWER
+ConfigMap is for non-confidential configuration; Secret is intended for sensitive values. Base64 encoding is not encryption.
+I enable encryption at rest, restrict RBAC, avoid logging secret values and prefer external secrets management where
+required.
+9. AWS cloud and architecture
+Question 54. Design a highly available AWS web application.
+INTERVIEW-READY ANSWER
+I would use a VPC across at least two Availability Zones, public subnets for an internet-facing load balancer and private
+subnets for application workloads. Security groups allow only required flows. Data services use appropriate managed or
+replicated options. I add autoscaling, health checks, monitoring, backups, encryption, IAM roles and IaC. The exact
+architecture depends on traffic, state, compliance and budget.
+Question 55. EC2 is running but SSH fails. What do you check?
+INTERVIEW-READY ANSWER
+I verify instance state, address and route path, then security group TCP 22 from the trusted source, subnet route table,
+internet gateway or VPN/bastion, NACLs, OS firewall, sshd, user/key permissions and authentication logs. For private
+instances I use approved bastion, VPN or Systems Manager access.
+Question 56. An EC2 instance has no internet access. How do you troubleshoot?
+Page 9
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+INTERVIEW-READY ANSWER
+I identify whether it is in a public or private subnet. A public subnet needs a route to an Internet Gateway and a public
+address or valid egress path. A private subnet commonly uses a NAT Gateway in a public subnet. I check route tables, NAT
+health, security groups, NACLs, DNS and OS routes.
+Question 57. Security Groups vs Network ACLs?
+INTERVIEW-READY ANSWER
+Security Groups are stateful and attached to network interfaces/resources; return traffic is automatically allowed. NACLs
+are stateless and apply at subnet boundaries, so inbound and outbound rules must both permit traffic. Security Groups
+have allow rules; NACLs support allow and deny. I use Security Groups for workload-level controls.
+Question 58. An S3 bucket is accidentally public. What do you do?
+INTERVIEW-READY ANSWER
+I restrict public access immediately through incident procedure, preserve evidence and identify data exposure scope. I
+review bucket policy, ACLs, Block Public Access, access logs and CloudTrail, notify security/data owners and remediate
+with least privilege and automated checks.
+Question 59. How do you store application secrets in AWS?
+INTERVIEW-READY ANSWER
+I use Secrets Manager or Parameter Store with KMS encryption and grant access through a least-privilege IAM role. I avoid
+secrets in code, AMIs, Docker images, user data or plain-text pipeline variables. I rotate credentials and audit access.
+Question 60. AWS bill increases by 40%. How do you investigate?
+INTERVIEW-READY ANSWER
+I compare periods in Cost Explorer by service, region, account and usage type. I inspect EC2 hours and sizes, EBS,
+snapshots, NAT data processing, data transfer, load balancers, logs and S3. I distinguish expected growth from waste,
+apply rightsizing/schedules/lifecycle policies and set budgets and alerts.
+Question 61. How do you design backup and disaster recovery?
+INTERVIEW-READY ANSWER
+I agree RPO and RTO with the business, identify data and dependencies, define backup frequency, retention, encryption
+and cross-account/region copies, and test restores. I use IaC to recreate infrastructure and choose pilot-light,
+warm-standby or multi-site based on criticality and cost. A backup is not proven until restored.
+10. Terraform and Infrastructure as Code
+Question 62. Terraform plan wants to destroy and recreate an existing EC2 instance. What
+do you do?
+INTERVIEW-READY ANSWER
+I do not apply immediately. I inspect which argument forces replacement, compare configuration with state and real
+infrastructure, and check provider changes, resource addressing, moved blocks and manual drift. If unexpected, I stop and
+correct the configuration or state mapping. I obtain review before destructive changes.
+Question 63. Someone manually changed an AWS security group outside Terraform. What
+happens?
+INTERVIEW-READY ANSWER
+That is configuration drift. Terraform refreshes remote information during planning and may propose changes to restore
+the configuration declared in code. I inspect the plan and decide whether the manual change was intentional. If required, I
+update Terraform; otherwise I apply the reviewed plan to restore the desired state.
+Question 64. What is Terraform state and why protect it?
+INTERVIEW-READY ANSWER
+State maps Terraform resource addresses to real infrastructure objects and stores attributes needed for planning. It can
+contain sensitive data, so I use encryption, strict access control, versioning and secure remote storage. Team workflows
+use supported remote backends and locking; state files are never committed to Git.
+Question 65. Two engineers run Terraform apply simultaneously. How do you prevent state
+corruption?
+INTERVIEW-READY ANSWER
+A supported remote backend can lock state during write operations. I use locking and never disable it casually. If a lock is
+stale, I verify no operation is active and only force-unlock with the exact lock ID under the team's procedure.
+Question 66. Plan vs apply?
+Page 10
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+INTERVIEW-READY ANSWER
+`terraform plan` calculates and displays proposed changes without applying them. `terraform apply` executes the
+changes after approval. In pipelines I review and retain a plan artifact, then apply the reviewed plan.
+Question 67. Terraform apply is interrupted halfway. What do you do?
+INTERVIEW-READY ANSWER
+I inspect command output, backend state and actual cloud resources, then create a fresh plan. Some resources may have
+completed and been recorded while others may not. I reconcile discrepancies carefully and apply only after reviewing the
+new plan.
+Question 68. How do you import an existing AWS resource into Terraform?
+INTERVIEW-READY ANSWER
+I write matching resource configuration, identify the resource ID and use `terraform import` or an import block. Import
+associates the object with a Terraform address but does not generate a complete desired configuration. I reconcile
+arguments and run plan until configuration represents the existing object.
+Question 69. Terraform vs Ansible?
+INTERVIEW-READY ANSWER
+Terraform primarily provisions infrastructure such as VPCs, instances and security groups. Ansible primarily configures
+operating systems and applications, such as packages, files and services. They can work together: Terraform provisions
+and Ansible configures.
+11. Ansible and configuration management
+Question 70. Install and configure Nginx on 20 Linux servers using Ansible. Explain the
+complete approach.
+INTERVIEW-READY ANSWER
+I use a control node with SSH access to managed hosts. I list the 20 servers in an inventory group, use privilege
+escalation, and create a playbook to install Nginx, deploy a managed template, validate configuration and ensure the
+service is enabled and running. Ansible is generally agentless over SSH for Linux. I syntax-check, run a canary, then target
+the group, inspect failed hosts and verify service health. I use variables for OS differences and handlers to reload only
+when configuration changes.
+# inventory.ini
+[webservers]
+web01 ansible_host=10.0.1.11
+web02 ansible_host=10.0.1.12
+# nginx.yml- name: Configure Nginx fleet
+  hosts: webservers
+  become: true
+  tasks:
+    - name: Install Nginx
+      ansible.builtin.package:
+        name: nginx
+        state: present
+    - name: Ensure service is running
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+ansible-playbook -i inventory.ini nginx.yml
+LIKELY FOLLOW-UP
+Why is Ansible called agentless, and how does idempotency help on reruns?
+Question 71. The playbook succeeds on 15 servers and fails on 5. What do you do?
+INTERVIEW-READY ANSWER
+I inspect failures host by host and classify SSH/authentication, privilege escalation, package repository, OS, disk, config
+validation or service issues. I fix the cause and rerun; idempotent tasks leave already-correct hosts unchanged. I use
+`serial` or canary groups to limit blast radius.
+Question 72. What is idempotency? Give a practical example.
+INTERVIEW-READY ANSWER
+Idempotency means repeated execution leaves the host in the intended state without unnecessary repeated changes.
+`package: name=nginx state=present` ensures the package is installed, and `service: state=started enabled=true`
+ensures the service runs and starts at boot. Native modules are preferable to raw shell commands.
+Page 11
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+Question 73. A shell task reports changed every run. How do you improve it?
+INTERVIEW-READY ANSWER
+I replace it with a native module such as package, service, file, template or user where possible. If shell is unavoidable, I
+use `creates`, `removes` or accurate `changed_when` conditions. I do not suppress change reporting unless the condition
+truly reflects state.
+Question 74. How do you deploy config and reload a service only when the file changes?
+INTERVIEW-READY ANSWER
+I use `template` or `copy` and notify a handler. The handler runs only when the file changes. For Nginx I validate with
+`nginx -t` before reloading.
+Question 75. Static vs dynamic inventory?
+INTERVIEW-READY ANSWER
+Static inventory is maintained in INI or YAML. Dynamic inventory obtains hosts from cloud APIs or inventory plugins and is
+useful when infrastructure changes frequently. Secrets should not be stored in plain inventory files.
+12. Bash, Python and automation
+Question 76. Write a Bash script to check whether Nginx is running.
+INTERVIEW-READY ANSWER
+I use `systemctl is-active --quiet`, which returns a status code. I make the service name configurable and return non-zero
+on failure so a scheduler or pipeline can detect it.
+#!/usr/bin/env bash
+set -euo pipefail
+SERVICE="${1:-nginx}"
+if systemctl is-active --quiet "$SERVICE"; then
+  echo "$SERVICE is running"
+else
+  echo "$SERVICE is NOT running"
+  exit 1
+fi
+Question 77. How would you check disk usage across 50 servers?
+INTERVIEW-READY ANSWER
+I use Ansible to gather facts or execute a read-only disk check across inventory, capture mount and percentage, and
+report hosts above a threshold. I handle unreachable hosts separately and do not automatically delete data. Alerting and
+remediation are separate steps.
+Question 78. A script deletes files older than seven days. How do you make it safe?
+INTERVIEW-READY ANSWER
+I validate the target directory, use a dry run first, restrict file pattern and filesystem scope, log candidates and confirm
+retention policy. I review output before enabling `-delete`; I never run broad `rm -rf` based on an unchecked variable.
+find /var/log/myapp -type f -mtime +7 -print
+# Only after review and approval:
+find /var/log/myapp -type f -mtime +7 -delete
+Question 79. When would you use Python instead of Bash?
+INTERVIEW-READY ANSWER
+Bash is suitable for short OS tasks and command orchestration. Python is better for structured data, APIs, JSON/YAML,
+complex logic, reusable functions, testing and error handling. Both need validated inputs, logging and secure secret
+handling.
+13. Monitoring, logging and observability
+Question 80. Users say the app is slow, but CPU is only 20%. What do you investigate?
+INTERVIEW-READY ANSWER
+I check latency percentiles, errors, traffic, database response time, connection pools, thread pools, disk I/O, network, DNS,
+downstream services and queue depth. I correlate logs and traces with the time of impact. The bottleneck may be a
+database lock or external API rather than CPU.
+Question 81. What do you monitor for a production web application?
+INTERVIEW-READY ANSWER
+I monitor latency, traffic, errors and saturation, plus availability, CPU, memory, disk and I/O, network, container restarts,
+Pod readiness, deployments, database connections, queue depth and dependency health. Alerts should be actionable and
+Page 12
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+tied to user impact.
+Question 82. Prometheus target is DOWN. How do you troubleshoot?
+INTERVIEW-READY ANSWER
+I inspect the scrape error in Targets, verify exporter process and port, scrape path and scheme, DNS, network, firewall,
+TLS/authentication and Prometheus configuration. I validate and reload configuration, then confirm target UP and metrics
+arriving.
+Question 83. Grafana dashboard shows no data. What do you check?
+INTERVIEW-READY ANSWER
+I verify time range and variables, test the data source, run the PromQL query in Explore, confirm the metric exists and
+inspect labels and scrape health. I isolate whether it is dashboard, query or source-metric failure.
+Question 84. How do you reduce alert fatigue?
+INTERVIEW-READY ANSWER
+I alert on symptoms and user impact, group related alerts, set meaningful thresholds and durations, define severity and
+ownership, add runbook links and review noisy alerts after incidents.
+14. DevSecOps, Vault and container security
+Question 85. A scanner reports a critical CVE in a base image. What do you do?
+INTERVIEW-READY ANSWER
+I identify the package, version, exploitability, exposure and affected images. I rebuild using a patched base or
+dependency, run tests and rescan. If no fix exists, I assess compensating controls and obtain a time-bound approved
+exception. I do not suppress findings merely to make the pipeline green.
+Question 86. How would you add image scanning to Jenkins?
+INTERVIEW-READY ANSWER
+I scan the exact image tag or digest using the approved scanner, publish the report and enforce policy thresholds. Critical
+findings fail the pipeline or require a formal exception. I retain scan evidence linked to the build and scan again before
+promotion if policy requires.
+Question 87. How do you build a non-root Docker image?
+INTERVIEW-READY ANSWER
+I create a dedicated unprivileged user, ensure required files and directories have correct ownership, set `USER` and test
+under that UID. I avoid privileged runtime settings and check the app does not depend on protected paths or restricted
+ports.
+Question 88. How do you manage secrets across Jenkins, Docker and Kubernetes?
+INTERVIEW-READY ANSWER
+I keep secrets out of Git, Docker build args, image layers, logs and plain-text manifests. Jenkins references scoped
+credential IDs; runtime secrets come from Vault or a cloud secrets manager. Kubernetes RBAC is restricted and Secrets
+encrypted at rest. I rotate exposed credentials and audit access.
+Question 89. An AWS key is pushed to GitHub. What is your response?
+INTERVIEW-READY ANSWER
+I treat it as compromised: revoke or rotate it, identify the IAM principal and permissions, review CloudTrail, inspect for
+suspicious access and notify security. I remove it from history according to policy, but rotation comes first because history
+cleanup does not invalidate it. I add secret scanning and prefer IAM roles.
+Question 90. Explain SAST, DAST, SCA and container scanning.
+INTERVIEW-READY ANSWER
+SAST analyzes source or binaries without running the application. DAST tests a running application externally. SCA checks
+third-party dependencies for known vulnerabilities and license risks. Container scanning checks OS packages and
+application dependencies inside images. They cover different layers and complement one another.
+15. Release strategies, reliability and incident
+response
+Question 91. A release causes an outage. What is your incident response?
+INTERVIEW-READY ANSWER
+Page 13
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+I acknowledge the incident, establish impact and severity, communicate in the incident channel and identify the last
+known-good version. I correlate deployment events with monitoring. If rollback is safest, I execute it, verify user-facing
+health and preserve evidence. After recovery I document timeline, root cause and preventive actions.
+Question 92. Explain rolling, blue-green and canary deployments.
+INTERVIEW-READY ANSWER
+Rolling replaces instances or Pods gradually and is resource-efficient, but old and new versions coexist. Blue-green
+maintains two environments and switches traffic after validation, enabling fast switchback but requiring extra capacity.
+Canary sends a small traffic percentage to the new version and increases it as metrics remain healthy. Choice depends on
+compatibility, routing, capacity and rollback needs.
+Question 93. What are SLA, SLO and SLI?
+INTERVIEW-READY ANSWER
+An SLI is a measured indicator such as successful request percentage or latency. An SLO is the target for that indicator
+over a period. An SLA is a customer-facing agreement that may include consequences if commitments are missed.
+Question 94. How do you conduct a blameless post-incident review?
+INTERVIEW-READY ANSWER
+I document timeline, customer impact, detection, response, contributing factors and recovery. I focus on system
+conditions rather than blame. Actions are specific, assigned, prioritized and tracked. I identify improvements in
+monitoring, automation, testing and rollback.
+16. Agile, sprint and HR questions
+Question 95. How long is your sprint and what happens during it?
+INTERVIEW-READY ANSWER
+Use your team's actual cadence. If it is a two-week sprint, say: “We work in two-week sprints. In planning we review
+priorities and agree on stories. During the sprint we attend daily stand-ups, work on tickets, raise blockers, review
+changes and test. At the end we demonstrate completed work in the review and discuss improvements in the
+retrospective.” Do not claim two weeks if your team uses another duration.
+Question 96. What do you say in a daily stand-up?
+INTERVIEW-READY ANSWER
+I keep it concise: what I completed, what I will do next and blockers. Example: “Yesterday I fixed the Jenkins agent issue
+and validated the QA build. Today I am updating artifact promotion and testing it. I am waiting for the network team to
+confirm registry connectivity.” Detailed troubleshooting happens separately.
+Question 97. How do you estimate a DevOps task?
+INTERVIEW-READY ANSWER
+I clarify scope, dependencies, environments, tests, approvals and rollback effort. I break work into implementation,
+testing, documentation and release tasks, use the team's estimation method and account for external dependencies. I
+communicate early if new information changes the estimate.
+Question 98. A developer blames DevOps for a failed deployment. How do you respond?
+INTERVIEW-READY ANSWER
+I keep the discussion factual and collaborative. I share pipeline logs and deployment events, isolate whether the issue is
+code, configuration, infrastructure or release process, and focus on restoring service. I document the fix and prevention
+action rather than arguing about blame.
+Question 99. How do you handle multiple urgent tickets?
+INTERVIEW-READY ANSWER
+I prioritize by severity, customer impact, production risk, deadlines and dependencies with my lead. I communicate what I
+can take and what must wait, avoid leaving critical work half-finished and keep ticket updates current.
+Question 100. Why are you looking for a new opportunity?
+INTERVIEW-READY ANSWER
+I am looking for broader DevOps responsibilities, mature automation and cloud-native practices, and growth in CI/CD,
+Kubernetes, infrastructure as code and reliability. I want to contribute with the hands-on experience I have gained while
+growing into more end-to-end ownership.
+Question 101. What is your notice period?
+INTERVIEW-READY ANSWER
+My notice period is [insert your actual contractual notice period]. I will follow the formal resignation and handover process.
+My earliest joining date depends on the resignation date and the release confirmed by my current employer. If an earlier
+Page 14
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+release is possible, I can discuss it, but I will not promise an unapproved date.
+Question 102. What is your current and expected CTC?
+INTERVIEW-READY ANSWER
+My current CTC is [insert your actual current CTC]. Based on the role, my experience and the overall compensation
+structure, I am expecting [insert your realistic expected range]. I am open to discussing the complete package. I would
+provide accurate figures rather than guessing.
+Question 103. Why should we hire you?
+INTERVIEW-READY ANSWER
+I bring hands-on experience across CI/CD, Docker, Linux, Ansible, Kubernetes, Terraform, artifact management and
+security scanning. I have contributed to Kubernetes upgrades, Vault migration and decommissioning, Linux migration and
+Artifactory optimization. I understand DevOps is about repeatable releases, reduced operational risk, troubleshooting and
+collaboration—not just tool names.
+17. Practical command round
+Question 104. Find the top five CPU and memory consuming processes.
+INTERVIEW-READY ANSWER
+I sort process output in descending order and include the header plus five processes.
+ps aux --sort=-%cpu | head -n 6
+ps aux --sort=-%mem | head -n 6
+Question 105. Check whether port 443 is listening and test HTTPS.
+INTERVIEW-READY ANSWER
+The first command checks local listening sockets; curl tests the endpoint and OpenSSL inspects the TLS handshake and
+certificate.
+sudo ss -lntp | grep ':443'
+curl -vkI https://example.com
+openssl s_client -connect example.com:443 -servername example.com
+Question 106. Show a safe Docker build, inspect, scan and push flow.
+INTERVIEW-READY ANSWER
+I build from the reviewed commit, tag uniquely, scan the exact image, authenticate securely and push. Production should
+deploy the immutable digest.
+docker build -t registry.example.com/team/app:1.4.2 .
+docker image inspect registry.example.com/team/app:1.4.2
+# Run the approved image scanner here
+docker login registry.example.com
+docker push registry.example.com/team/app:1.4.2
+Question 107. What Kubernetes commands do you run first when a deployment is
+unhealthy?
+INTERVIEW-READY ANSWER
+I check workload status, rollout, Pod details, previous logs and events. Then I inspect Service endpoints or ingress
+depending on the symptom.
+kubectl get deploy,rs,pods -n production
+kubectl rollout status deployment/myapp -n production
+kubectl describe pod <pod> -n production
+kubectl logs <pod> -n production --previous
+kubectl get events -n production --sort-by=.lastTimestamp
+Question 108. What Terraform commands do you run before infrastructure changes?
+INTERVIEW-READY ANSWER
+I initialize, format-check, validate and generate a plan. I review destructive actions and apply only the reviewed plan
+through the approved workflow.
+terraform init
+terraform fmt -check
+terraform validate
+terraform plan -out=tfplan
+terraform show tfplan
+terraform apply tfplan
+Question 109. What Ansible checks do you run before a production playbook?
+INTERVIEW-READY ANSWER
+I syntax-check, use check mode and diff where supported, run a canary host and then roll out in batches.
+Page 15
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+ansible-playbook -i inventory.ini nginx.yml --syntax-check
+ansible-playbook -i inventory.ini nginx.yml --check --diff
+ansible-playbook -i inventory.ini nginx.yml --limit web01
+ansible-playbook -i inventory.ini nginx.yml
+18. Final mixed production scenarios
+Question 110. At 2 AM, all API instances are unhealthy. What do you do first?
+INTERVIEW-READY ANSWER
+I acknowledge the alert, establish whether the scope is one service, zone or shared dependency, check load balancer
+health, recent deployments, application logs, resource metrics, network and database. I notify on-call, mitigate with the
+safest action such as rollback or dependency recovery, verify user-facing health and then document timeline and
+prevention.
+Question 111. QA works but production Kubernetes deployment fails. What differences do
+you compare?
+INTERVIEW-READY ANSWER
+I compare image digest, chart and values, namespace, ConfigMaps and Secrets, service account/RBAC, resource
+requests/limits, network policies, ingress, DNS, external dependencies, storage class and cluster versions. I inspect
+production events and rendered manifests rather than guessing.
+Question 112. A pipeline has no rollback stage. What would you propose?
+INTERVIEW-READY ANSWER
+I define rollback for application and data separately. For stateless workloads it may redeploy the last known-good
+immutable image or Helm revision. Database changes need backward-compatible migrations because rolling back code
+may not reverse schema. I add health gates, deployment metadata, documented rollback, approval and verification, then
+test it.
+Question 113. A team wants to deploy directly from a developer laptop. What risks do you
+explain?
+INTERVIEW-READY ANSWER
+It reduces traceability and repeatability and may bypass review, tests, scans, artifact versioning, approvals and audit
+records. I recommend deployment through CI/CD from a reviewed commit using an immutable artifact, controlled
+permissions and an auditable release record.
+Question 114. A repetitive task is undocumented but you are asked to automate it. What
+do you do?
+INTERVIEW-READY ANSWER
+I observe the current process and speak with owners to identify inputs, outputs, approvals, failure cases and rollback. I
+document it, build a small safe version, test in non-production, add logging and error handling, and ask the process owner
+to validate. Automating an unclear process can make mistakes happen faster.
+Page 16
+Harsha Kumar A | Complete Practical DevOps Interview Guide
+Interview-day checklist
+☐ Prepare a 60–90 second introduction based on your actual role and strongest projects.
+☐ Be able to draw and explain one CI/CD pipeline from commit to production.
+☐ Prepare detailed stories for Kubernetes upgrades, Vault migration/decommissioning, Linux migration, container security
+and Artifactory optimization.
+☐ Practice Linux troubleshooting: CPU, memory, disk, inode, processes, ports, services and logs.
+☐ Practice Kubernetes troubleshooting: describe, events, logs, probes, resources, endpoints and rollout status.
+☐ Understand Terraform state, remote backend, locking, drift, plan review, import and recovery.
+☐ Know how your team handles sprints, tickets, reviews, approvals, releases and incidents.
+☐ Fill in actual notice period and compensation details before HR rounds.
+☐ Never claim a tool, incident, architecture or metric you cannot explain under follow-up questioning.
+Selected research and technical references
+• 2026 DevOps interview coverage and role expectations — https://www.corehrx.com/jobs/interview-questions/devops/
+• 2026 interview experiences and practical questions — https://github.com/iamrohitlad/Devops-Interview-2026
+• Practical DevOps interview question collection — https://devopsinterviewprep.com/devops-interview-questions
+• Kubernetes Pod lifecycle and CrashLoopBackOff — https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
+• Terraform state locking — https://developer.hashicorp.com/terraform/language/state/locking
+• Terraform plan command — https://developer.hashicorp.com/terraform/cli/commands/plan
+• Kubernetes CrashLoopBackOff troubleshooting —
+https://docs.cloud.google.com/kubernetes-engine/docs/troubleshooting/crashloopbackoff-events
+• Practical DevSecOps interview topics — https://www.youtube.com/watch?v=47iIP-PhdPM
+This guide is designed to prepare you for practical technical discussions. Interview questions vary by company and interviewer; no
+preparation guide can guarantee a job offer.
